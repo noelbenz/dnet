@@ -1,8 +1,8 @@
 
-del bin/main.exe
+del bin\main.exe
 
-dmd -o bin/main.exe main.d
+dmd -odbin -ofbin/main.exe main.d net.d
 
-bin/main.exe
+bin\main.exe
 
 pause

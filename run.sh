@@ -4,7 +4,7 @@ then
 	rm -f bin/dirc
 fi
 
-gdc -o bin/dirc main.d
+gdc -o bin/dirc main.d net.d
 
 bin/dirc
 
