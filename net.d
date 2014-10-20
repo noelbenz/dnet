@@ -299,6 +299,11 @@ void sendString(Socket s, string v)
 	s.send(v);
 }
 
+void sendPacket(Socket s, Packet p)
+{
+	s.send(p.data);
+}
+
 
 
 
@@ -310,75 +315,77 @@ struct Packet
 	{
 		this.addUByte(id);
 	}
+	
+	
+	Packet addUByte(int v)
+	{
+		data ~= cast(byte)v;
+		return this;
+	}
+	Packet addByte(int v)
+	{
+		data ~= cast(ubyte)v;
+		return this;
+	}
+	Packet addUShort(int v)
+	{
+		btoUShort conv = {value : cast(ushort)v};
+		data = data ~ cast(ubyte[])conv.bytes;
+		return this;
+	}
+	Packet addShort(int v)
+	{
+		btoShort conv = {value: cast(short)v};
+		data = data ~ cast(ubyte[])conv.bytes;
+		return this;
+	}
+	Packet addUInt(uint v)
+	{
+		btoUInt conv = {value : v};
+		data = data ~ cast(ubyte[])conv.bytes;
+		return this;
+	}
+	Packet addInt(int v)
+	{
+		btoInt conv = {value : v};
+		data = data ~ cast(ubyte[])conv.bytes;
+		return this;
+	}
+	Packet addULong(ulong v)
+	{
+		btoULong conv = {value : v};
+		data = data ~ cast(ubyte[])conv.bytes;
+		return this;
+	}
+	Packet addLong(long v)
+	{
+		btoLong conv = {value : v};
+		data = data ~ cast(ubyte[])conv.bytes;
+		return this;
+	}
+	Packet addFloat(float v)
+	{
+		btoFloat conv = {value : v};
+		data = data ~ cast(ubyte[])conv.bytes;
+		return this;
+	}
+	Packet addDouble(double v)
+	{
+		btoFloat conv = {value : v};
+		data = data ~ cast(ubyte[])conv.bytes;
+		return this;
+	}
+	Packet addBool(bool v)
+	{
+		addUByte(v ? 1 : 0);
+		return this;
+	}
+	Packet addString(string v)
+	{
+		addUInt(cast(uint)v.length);
+		data = data ~ cast(immutable(ubyte[]))v;
+		return this;
+	}
 }
 
-Packet addUByte(Packet p, int v)
-{
-	p.data ~= cast(byte)v;
-	return p;
-}
-Packet addByte(Packet p, int v)
-{
-	p.data ~= cast(ubyte)v;
-	return p;
-}
-Packet addUShort(Packet p, int v)
-{
-	btoUShort conv = {value : cast(ushort)v};
-	p.data = p.data ~ cast(ubyte[])conv.bytes;
-	return p;
-}
-Packet addShort(Packet p, int v)
-{
-	btoShort conv = {value: cast(short)v};
-	p.data = p.data ~ cast(ubyte[])conv.bytes;
-	return p;
-}
-Packet addUInt(Packet p, uint v)
-{
-	btoUInt conv = {value : v};
-	p.data = p.data ~ cast(ubyte[])conv.bytes;
-	return p;
-}
-Packet addInt(Packet p, int v)
-{
-	btoInt conv = {value : v};
-	p.data = p.data ~ cast(ubyte[])conv.bytes;
-	return p;
-}
-Packet addULong(Packet p, ulong v)
-{
-	btoULong conv = {value : v};
-	p.data = p.data ~ cast(ubyte[])conv.bytes;
-	return p;
-}
-Packet addLong(Packet p, long v)
-{
-	btoLong conv = {value : v};
-	p.data = p.data ~ cast(ubyte[])conv.bytes;
-	return p;
-}
-Packet addFloat(Packet p, float v)
-{
-	btoFloat conv = {value : v};
-	p.data = p.data ~ cast(ubyte[])conv.bytes;
-	return p;
-}
-Packet addDouble(Packet p, double v)
-{
-	btoFloat conv = {value : v};
-	p.data = p.data ~ cast(ubyte[])conv.bytes;
-	return p;
-}
-Packet addBool(Packet p, bool v)
-{
-	p.addUByte(v ? 1 : 0);
-	return p;
-}
-Packet addString(Packet p, string v)
-{
-	p.addUInt(cast(uint)v.length);
-	p.data = p.data ~ cast(immutable(ubyte[]))v;
-	return p;
-}
 

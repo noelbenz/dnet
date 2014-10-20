@@ -14,8 +14,11 @@ int main()
 	
 	io.writeln(s.readByte());
 	
-	char[4] data = "abcd\n".dup;
-	s.send(data);
+	Packet p = Packet(1);
+	
+	p.addString("01234567890123456789012345678901234567890123456789012345678901234");
+	
+	s.sendPacket(p);
 	
 	io.writeln(s.readByte());
 	
