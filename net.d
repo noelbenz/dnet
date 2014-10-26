@@ -17,11 +17,11 @@ int readUByte(Socket s)
 	s.receive(cast(void[])data);
 	return cast(int)data[0];
 }
-void sendUByte(Socket s, int v)
+auto sendUByte(Socket s, int v)
 {
 	ubyte[1] data;
 	data[0] = cast(ubyte)v;
-	s.send(data);
+	return s.send(data);
 }
 
 /**
@@ -33,11 +33,11 @@ int readByte(Socket s)
 	s.receive(cast(void[])data);
 	return cast(int)data[0];
 }
-void sendByte(Socket s, int v)
+auto sendByte(Socket s, int v)
 {
 	byte[1] data;
 	data[0] = cast(byte)v;
-	s.send(data);
+	return s.send(data);
 }
 
 
@@ -59,10 +59,10 @@ int readUShort(Socket s)
 	btoUShort conv = {bytes : data};
 	return cast(int)conv.value;
 }
-void sendUShort(Socket s, int v)
+auto sendUShort(Socket s, int v)
 {
 	btoUShort conv = {value : cast(ushort)v};
-	s.send(conv.bytes);
+	return s.send(conv.bytes);
 }
 
 
@@ -82,10 +82,10 @@ int readShort(Socket s)
 	btoShort conv = {bytes : data};
 	return cast(int)conv.value;
 }
-void sendShort(Socket s, int v)
+auto sendShort(Socket s, int v)
 {
 	btoShort conv = {value : cast(short)v};
-	s.send(conv.bytes);
+	return s.send(conv.bytes);
 }
 
 
@@ -113,10 +113,10 @@ uint readUInt(Socket s)
 	btoUInt conv = {bytes : data};
 	return conv.value;
 }
-void sendUInt(Socket s, uint v)
+auto sendUInt(Socket s, uint v)
 {
 	btoUInt conv = {value : v};
-	s.send(conv.bytes);
+	return s.send(conv.bytes);
 }
 
 private union btoInt
@@ -135,10 +135,10 @@ int readInt(Socket s)
 	btoInt conv = {bytes : data};
 	return conv.value;
 }
-void sendInt(Socket s, int v)
+auto sendInt(Socket s, int v)
 {
 	btoInt conv = {value : v};
-	s.send(conv.bytes);
+	return s.send(conv.bytes);
 }
 
 
@@ -170,10 +170,10 @@ long readULong(Socket s)
 	btoULong conv = {bytes : data};
 	return conv.value;
 }
-void sendULong(Socket s, ulong v)
+auto sendULong(Socket s, ulong v)
 {
 	btoULong conv = {value : v};
-	s.send(conv.bytes);
+	return s.send(conv.bytes);
 }
 
 
@@ -193,10 +193,10 @@ long readLong(Socket s)
 	btoLong conv = {bytes : data};
 	return conv.value;
 }
-void sendLong(Socket s, long v)
+auto sendLong(Socket s, long v)
 {
 	btoLong conv = {value: v};
-	s.send(conv.bytes);
+	return s.send(conv.bytes);
 }
 
 
@@ -226,10 +226,10 @@ float readFloat(Socket s)
 	btoFloat conv = {bytes : data};
 	return conv.value;
 }
-void sendFloat(Socket s, float v)
+auto sendFloat(Socket s, float v)
 {
 	btoFloat conv = {value : v};
-	s.send(conv.bytes);
+	return s.send(conv.bytes);
 }
 
 private union btoDouble
@@ -249,10 +249,10 @@ double readDouble(Socket s)
 	btoDouble conv = {bytes : data};
 	return conv.value;
 }
-void sendDouble(Socket s, double v)
+auto sendDouble(Socket s, double v)
 {
 	btoDouble conv = {value : v};
-	s.send(conv.bytes);
+	return s.send(conv.bytes);
 }
 
 
@@ -269,9 +269,9 @@ bool readBool(Socket s)
 {
 	return s.readUByte() != 0;
 }
-void sendBool(Socket s, bool v)
+auto sendBool(Socket s, bool v)
 {
-	s.sendUByte(v ? 1 : 0);
+	return s.sendUByte(v ? 1 : 0);
 }
 
 
@@ -292,16 +292,16 @@ char[] readString(Socket s)
 	
 	return data;
 }
-void sendString(Socket s, string v)
+auto sendString(Socket s, string v)
 {
 	uint length = cast(uint)v.length;
 	s.sendUInt(length);
-	s.send(v);
+	return s.send(v);
 }
 
-void sendPacket(Socket s, Packet p)
+auto sendPacket(Socket s, Packet p)
 {
-	s.send(p.data);
+	return s.send(p.data);
 }
 
 

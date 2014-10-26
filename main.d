@@ -1,82 +1,109 @@
 
 static import socket = std.socket;
 static import io = std.stdio;
-static import cc = std.concurrency;
 static import thread = core.thread;
 static import time = core.time;
 
 import net;
 
-alias ThreadID = cc.Tid;
-alias threadID = cc.thisTid;
+// number of clients that are supported upon program startup
+const NUM_CLIENTS = 20;
 
-class Client
+Client[20] clients;
+int[20] releasedClients;
+
+int clientsUsed = 0;
+int cur = -1;
+// warning: doesn't check if client i has already been released
+void releaseClient(int i)
 {
+	cur++;
+	releasedClients[cur] = i;
+}
+int newClientID()
+{
+	// no clients currently released
+	if(cur == -1)
+	{
+		// still have unused client objects
+		if(clientsUsed < NUM_CLIENTS)
+		{
+			int id = clientsUsed;
+			clientsUsed++;
+			return id;
+		}
+		// no released clients and full use of all client instances
+		// cannot accept new connection
+		// future: expand array?
+		else
+		{
+			return -1;
+		}
+	}
+	
+	int id = releasedClients[cur];
+	cur--;
+	return id;
+}
+Client newClient()
+{
+	int id = newClientID();
+	
+	if(id == -1)
+		return null;
+	
+	if (clients[id] is null) {
+		clients[id] = new Client();
+	}
+	
+	auto c = clients[id];
+	c.id = id;
+	return c;
+}
+
+
+
+class Client : thread.Thread
+{
+	bool connected;
+	int id;
 	Socket socket;
 	
-	this(Socket socket)
+	this()
 	{
-		this.socket = socket;
+		super(&handleReceive);
+	}
+	
+	void handleReceive()
+	{
+		while(socket.isAlive())
+		{
+			int id = socket.readUByte();
+			
+			// default value is 0 when connection is closed
+			if(id == 0)
+			{
+				break;
+			}
+			else
+			{
+				io.writeln(id);
+			}
+		}
+		io.writeln("Receive: Connection closed by client.");
 	}
 	
 	void send(Packet p)
 	{
-		socket.sendPacket(p);
+		//cc.send(sendThread, cast(immutable(Packet))p);
 	}
 	
 	void ping()
 	{
-		Packet p = Packet(1);
-		send(p);
+		send(Packet(1));
 	}
-	
-private:
-	
-	this(){}
 }
 
-void handleReceive(shared(Client) c)
-{
-	
-	Socket s = cast(Socket)(c.socket);
-	
-	while(s.isAlive())
-	{
-		int id = s.readUByte();
-		
-		// default value is 0 when connection is closed
-		if(id == 0)
-		{
-			break;
-		}
-		else
-		{
-			io.writeln(id);
-		}
-	}
-	io.writeln("Receive: Connection closed by client.");
-}
-
-void handleSend(shared(Client) c)
-{
-	thread.Thread t = thread.thread_attachThis();
-	
-	Socket s = cast(Socket)(c.socket);
-	
-	while(s.isAlive())
-	{
-		char[1] data;
-		data[0] = 65;
-		int bytesSent = s.send(cast(void[])data);
-		
-		// error. assuming connection closed for the time being
-		if(bytesSent == -1)
-			break;
-		
-		t.sleep(time.dur!"seconds"(1));
-	}
-	io.writeln("Send: Connection closed by client.");
-}
 
 
 int main()
@@ -92,9 +119,10 @@ int main()
 	{
 		auto s = sock.accept();
 		
-		shared(Client) client = cast(shared(Client)) new Client(s);
-		cc.spawn(&handleReceive, client);
-		cc.spawn(&handleSend, client);
+		Client c = newClient();
+		c.socket = s;
+		
+		c.start();
 	}
 	
 	return 0;
