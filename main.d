@@ -19,21 +19,35 @@ const NUM_CLIENTS = 20;
 // produces the same results.
 // The downside is we add an ugly looking modifier. Oh well.
 __gshared mutex.Mutex clientsMutex;
-__gshared Client[20] clients;
-int[20] releasedClients;
+__gshared Client[NUM_CLIENTS] clients;
+__gshared int clientsUsed = 0;
 
-int clientsUsed = 0;
-int cur = -1;
+__gshared mutex.Mutex releaseMutex;
+__gshared int[NUM_CLIENTS] releasedClients;
+__gshared int clientsReleased = -1;
 // warning: doesn't check if client i has already been released
-void releaseClient(int i)
+void releaseClient(int id)
 {
-	cur++;
-	releasedClients[cur] = i;
+	synchronized(releaseMutex)
+	{
+		clientsReleased++;
+		releasedClients[clientsReleased] = id;
+	}
+}
+// warning: doesn't check if there are any released clients
+int renewClient()
+{
+	synchronized(releaseMutex)
+	{
+		int id = releasedClients[clientsReleased];
+		clientsReleased--;
+		return id;
+	}
 }
 int newClientID()
 {
 	// no clients currently released
-	if(cur == -1)
+	if(clientsReleased == -1)
 	{
 		// still have unused client objects
 		if(clientsUsed < NUM_CLIENTS)
@@ -50,10 +64,9 @@ int newClientID()
 			return -1;
 		}
 	}
-	
-	int id = releasedClients[cur];
-	cur--;
-	return id;
+	// reuse a released client object
+	else
+		return renewClient();
 }
 Client newClient()
 {
@@ -120,7 +133,7 @@ class Client : thread.Thread
 				sendToAll(p);
 			}
 		}
-		io.writeln("Receive: Connection closed by client.");
+		io.writefln("Receive: Connection closed by client(%d).", id);
 		releaseClient(id);
 	}
 	
@@ -142,6 +155,7 @@ class Client : thread.Thread
 int main()
 {
 	clientsMutex = new mutex.Mutex;
+	releaseMutex = new mutex.Mutex;
 	
 	io.writeln("Starting a server.");
 	
@@ -156,6 +170,8 @@ int main()
 		
 		Client c = newClient();
 		c.socket = s;
+		
+		io.writefln("Accepted new client(%d).", c.id);
 		
 		c.start();
 	}
