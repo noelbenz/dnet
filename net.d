@@ -316,6 +316,16 @@ struct Packet
 		this.addUByte(id);
 	}
 	
+	Packet add(inout(ubyte[]) v)
+	{
+		data = data ~ v;
+		return this;
+	}
+	Packet add(inout(char[]) v)
+	{
+		data = data ~ cast(inout(ubyte[]))v;
+		return this;
+	}
 	
 	Packet addUByte(int v)
 	{
@@ -380,7 +390,7 @@ struct Packet
 		addUByte(v ? 1 : 0);
 		return this;
 	}
-	Packet addString(string v)
+	Packet addString(inout(char[]) v)
 	{
 		addUInt(cast(uint)v.length);
 		data = data ~ cast(immutable(ubyte[]))v;

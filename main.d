@@ -1,4 +1,5 @@
 
+static import std.string;
 static import socket = std.socket;
 static import io = std.stdio;
 static import thread = core.thread;
@@ -6,6 +7,8 @@ static import time = core.time;
 static import mutex = core.sync.mutex;
 
 import net;
+
+alias format = std.string.format;
 
 // number of clients that are supported upon program startup
 const NUM_CLIENTS = 20;
@@ -119,17 +122,20 @@ class Client : thread.Thread
 	{
 		while(socket.isAlive())
 		{
-			int id = socket.readUByte();
+			int pid = socket.readUByte();
 			
 			// default value is 0 when connection is closed
-			if(id == 0)
+			if(pid == 0)
 			{
 				break;
 			}
 			else
 			{
+				char[] msg = socket.readString();
+				auto fmsg = format("Client(%d): %s", id, cast(string)msg);
+				io.writeln(fmsg);
 				auto p = Packet(2);
-				p.addUByte(id);
+				p.addString(fmsg);
 				sendToAll(p);
 			}
 		}
@@ -150,30 +156,85 @@ class Client : thread.Thread
 	}
 }
 
-
-
-int main()
+class Receiver : thread.Thread
 {
-	clientsMutex = new mutex.Mutex;
-	releaseMutex = new mutex.Mutex;
+	Socket socket;
 	
-	io.writeln("Starting a server.");
-	
-	auto addr = new InternetAddress(55555);
-	auto sock = new TcpSocket();
-	sock.bind(addr);
-	sock.listen(1);
-	
-	while(true)
+	this()
 	{
-		auto s = sock.accept();
+		super(&receive);
+	}
+	
+	void receive()
+	{
+		while(true)
+		{
+			int id = socket.readUByte();
+			
+			if(id == 0)
+			{
+				break;
+			}
+			else
+			{
+				io.writeln(socket.readString());
+			}
+		}
+	}
+}
+
+int main(char[][] args)
+{
+	char[] side = args[1];
+	
+	if(side == "server")
+	{
+		clientsMutex = new mutex.Mutex;
+		releaseMutex = new mutex.Mutex;
 		
-		Client c = newClient();
-		c.socket = s;
+		io.writeln("Starting a server.");
 		
-		io.writefln("Accepted new client(%d).", c.id);
+		auto addr = new InternetAddress(55555);
+		auto sock = new TcpSocket();
+		sock.bind(addr);
+		sock.listen(1);
 		
-		c.start();
+		while(true)
+		{
+			auto s = sock.accept();
+			
+			Client c = newClient();
+			c.socket = s;
+			
+			io.writefln("Accepted new client(%d).", c.id);
+			
+			c.start();
+		}
+	}
+	else
+	{
+		io.writeln("Booting client.");
+		
+		auto addr = new InternetAddress("127.0.0.1", 55555);
+		auto sock = new TcpSocket();
+		sock.connect(addr);
+		
+		io.writeln("Connected!");
+		
+		Receiver r = new Receiver();
+		r.socket = sock;
+		r.start();
+		
+		while(true)
+		{
+			string msg = io.readln();
+			
+			Packet p = Packet(2);
+			p.addString(msg[0 .. $-1]);
+			
+			sock.sendPacket(p);
+		}
+		
 	}
 	
 	return 0;
