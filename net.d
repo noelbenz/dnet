@@ -5,7 +5,9 @@ static import socket = std.socket;
 
 alias Socket = socket.Socket;
 alias TcpSocket = socket.TcpSocket;
+alias UdpSocket = socket.UdpSocket;
 alias InternetAddress = socket.InternetAddress;
+alias Internet6Address = socket.Internet6Address;
 alias Address = socket.Address;
 
 /**
