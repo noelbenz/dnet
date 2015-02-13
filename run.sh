@@ -6,5 +6,7 @@ fi
 
 gdc -o bin/dirc main.d net.d
 
-bin/dirc
+bin/dirc server &
+bin/dirc client &
+wait
 
